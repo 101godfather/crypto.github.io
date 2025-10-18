@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>加密货币交易执行与心理跟踪表</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:20px;background:#f7f9fb;color:#222}
+h1{text-align:center}
+.header-text{text-align:center;margin-bottom:8px}
+.header-text p{margin:4px 0;user-select:none}
+.section{margin-bottom:36px}
+.top-btn,.clear-btn{margin-right:8px;padding:6px 10px;border-radius:6px;border:none;background:#277a3a;color:#fff;cursor:pointer}
+.clear-btn{background:#c0392b}
+.search-box{padding:6px;width:280px;margin-left:8px}
+table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border:1px solid #d7dbe0;padding:6px;text-align:center}
+th{background:#eef2f6}
+input[type="number"],input[type="text"],select{width:100%;box-sizing:border-box;padding:4px}
+.editable{background:#fffbe6}
+canvas{width:48%;height:120px;margin-top:8px;display:inline-block}
+.canvas-container{text-align:center}
+</style>
+</head>
+<body>
+<h1 id="pageTop">加密货币交易执行与心理跟踪表</h1>
+<div class="header-text">
+  <p>币安八折手续费邀请码：BNB886666</p>
+  <p>欧易八折手续费邀请码：82567043</p>
+  <p>官方下载链接：btc99.cn 下载自动八折手续费减免</p>
+</div>
+
+<label for="globalJump">快速跳转到交易表：</label>
+<input id="globalJump" type="text" placeholder="输入币种首字母或前几个字母，按Enter跳转" class="search-box">
+
+<div id="tablesContainer"></div>
+
+<script>
+const coins=['BTC','ETH','SOL','BNB','山寨币'];
+const ROWS=100;
+
+function createTableSection(coin){
+  const section=document.createElement('div');
+  section.className='section';
+  section.id=coin+'Section';
+
+  // 首页按钮，直接跳到页面顶部
+  const topBtn=document.createElement('button');
+  topBtn.className='top-btn';
+  topBtn.textContent='首页';
+  topBtn.addEventListener('click',()=>{document.getElementById('pageTop').scrollIntoView({behavior:'auto'});});
+  section.appendChild(topBtn);
+
+  // 清除按钮
+  const clearBtn=document.createElement('button');
+  clearBtn.className='clear-btn';
+  clearBtn.textContent='清除';
+  let clickCount=0;
+  clearBtn.addEventListener('click',()=>{
+    clickCount++;
+    if(clickCount===2){
+      clickCount=0;
+      if(confirm('确定要清空表格吗？')) clearTableData(coin+'Table');
+    }
+    setTimeout(()=>{clickCount=0},1000);
+  });
+  section.appendChild(clearBtn);
+
+  const heading=document.createElement('h2');
+  heading.textContent=coin+' 交易表';
+  section.appendChild(heading);
+
+  const search=document.createElement('input');
+  search.type='text';
+  search.id=coin+'Search';
+  search.className='search-box';
+  search.placeholder='搜索 '+coin+' 交易...';
+  search.addEventListener('input',()=>filterTable(coin+'Table',search.value));
+  section.appendChild(search);
+
+  const table=document.createElement('table');
+  table.id=coin+'Table';
+  const thead=document.createElement('thead');
+  const headerRow=document.createElement('tr');
+  const headers=['序号','开仓日期/时间','入场价格','保证金(U)','仓位(U)','止损(U)','止盈(U)','实际盈亏(U)','手续费(U)','单独利润(U)','盈亏百分比(%)','是否严格执行策略','心理状态 (1-5)','备注','累计盈利(U)'];
+  headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;headerRow.appendChild(th);});
+  thead.appendChild(headerRow);table.appendChild(thead);
+
+  const tbody=document.createElement('tbody');
+  for(let i=1;i<=ROWS;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${i}</td>
+      <td><input type='text' class='editable' data-col='datetime'/></td>
+      <td><input type='number' class='editable' data-col='entry'/></td>
+      <td><input type='number' class='editable' data-col='margin'/></td>
+      <td><input type='number' class='editable' data-col='position'/></td>
+      <td><input type='number' class='editable' data-col='sl'/></td>
+      <td><input type='number' class='editable' data-col='tp'/></td>
+      <td><input type='number' class='editable' data-col='profit'/></td>
+      <td><input type='number' class='editable' data-col='fee'/></td>
+      <td><input type='number' readonly data-col='single'/></td>
+      <td><input type='number' readonly data-col='perc'/></td>
+      <td><select class='editable' data-col='strict'><option value=''> </option><option value='yes'>是</option><option value='no'>否</option></select></td>
+      <td><input type='number' min='1' max='5' class='editable' data-col='psych'/></td>
+      <td><input type='text' class='editable' data-col='remark'/></td>
+      <td><input type='number' readonly data-col='cum'/></td>
+    `;
+    Array.from(tr.querySelectorAll("input, select")).forEach(input=>{
+      const col=input.getAttribute('data-col');
+      if(['profit','fee','margin','entry','sl','tp'].includes(col)){
+        input.addEventListener('input',()=>{updateCumulative(table.id);saveTableData(table.id);});
+      }else{
+        input.addEventListener('input',()=>{saveTableData(table.id); if(col==='psych'||col==='remark') drawPsychChart(table.id);});
+      }
+    });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  section.appendChild(table);
+
+  const canvasContainer=document.createElement('div');
+  canvasContainer.className='canvas-container';
+  const cumCanvas=document.createElement('canvas');cumCanvas.id=coin+'CumChart';canvasContainer.appendChild(cumCanvas);
+  const psychCanvas=document.createElement('canvas');psychCanvas.id=coin+'PsychChart';canvasContainer.appendChild(psychCanvas);
+  section.appendChild(canvasContainer);
+
+  document.getElementById('tablesContainer').appendChild(section);
+  loadTableData(table.id);
+}
+
+coins.forEach(createTableSection);
+
+function updateCumulative(tableId){
+  const table=document.getElementById(tableId);if(!table) return;
+  let cum=0;
+  for(let i=1;i<table.rows.length;i++){
+    const row=table.rows[i];
+    const profit=parseFloat(row.cells[7].querySelector('input').value)||0;
+    const fee=parseFloat(row.cells[8].querySelector('input').value)||0;
+    const margin=parseFloat(row.cells[3].querySelector('input').value)||0;
+    const position=parseFloat(row.cells[4].querySelector('input').value)||0;
+    const percInput=row.cells[10].querySelector('input');
+    const cumInput=row.cells[14].querySelector('input');
+    const singleInput=row.cells[9].querySelector('input');
+    let perc='',singleProfit=profit-fee;
+    singleInput.value=singleProfit.toFixed(2);
+    if(margin!==0) perc=((profit-fee)/margin*100).toFixed(2);
+    percInput.value=perc;
+    cum+=singleProfit;
+    cumInput.value=cum.toFixed(2);
+  }
+  drawCumChart(tableId);
+  drawPsychChart(tableId);
+}
+
+function drawCumChart(tableId){
+  const canvasId=tableId.replace('Table','')+'CumChart';
+  const canvas=document.getElementById(canvasId);if(!canvas) return;
+  const table=document.getElementById(tableId);if(!table) return;
+  const data=Array.from(table.rows).slice(1).map(r=>parseFloat(r.cells[14].querySelector('input').value)||0);
+  const labels=data.map((_,i)=>i+1);
+  const key=canvasId+'_cum_chart';
+  if(window[key]) window[key].destroy();
+  const ctx=canvas.getContext('2d');
+  window[key]=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'累计盈利(U)',data,fill:false}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+}
+
+function drawPsychChart(tableId){
+  const canvasId=tableId.replace('Table','')+'PsychChart';
+  const canvas=document.getElementById(canvasId);if(!canvas) return;
+  const table=document.getElementById(tableId);if(!table) return;
+  const data=Array.from(table.rows).slice(1).map(r=>{const v=r.cells[12].querySelector('input').value;return v===''?null:parseFloat(v)});
+  const labels=data.map((_,i)=>i+1);
+  const key=canvasId+'_psych_chart';
+  if(window[key]) window[key].destroy();
+  const ctx=canvas.getContext('2d');
+  window[key]=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'心理状态 (1-5)',data,fill:false}]},options:{responsive:true,scales:{y:{beginAtZero:true,suggestedMax:5}}}});
+}
+
+function filterTable(tableId,text){
+  const table=document.getElementById(tableId);if(!table)return;
+  const q=(text||'').toLowerCase();
+  for(let i=1;i<table.rows.length;i++){
+    const r=table.rows[i];
+    r.style.display=(r.innerText.toLowerCase().includes(q))?'':'none';
+  }
+}
+
+function saveTableData(tableId){
+  const table=document.getElementById(tableId);if(!table) return;
+  const rows=[];
+  for(let i=1;i<table.rows.length;i++){
+    const cells=Array.from(table.rows[i].querySelectorAll('input,select'));
+    rows.push(cells.map(el=>el.value));
+  }
+  localStorage.setItem('tableData_'+tableId,JSON.stringify(rows));
+}
+
+function loadTableData(tableId){
+  const table=document.getElementById(tableId);if(!table) return;
+  const raw=localStorage.getItem('tableData_'+tableId);
+  if(!raw) return;
+  try{
+    const rows=JSON.parse(raw);
+    for(let i=0;i<rows.length&&i+1<table.rows.length;i++){
+      const values=rows[i];
+      const inputs=Array.from(table.rows[i+1].querySelectorAll('input,select'));
+      for(let j=0;j<inputs.length&&j<values.length;j++) inputs[j].value=values[j]!==undefined?values[j]:'';
+    }
+  }catch(e){console.error('load parse err',e);}
+  updateCumulative(tableId);
+}
+
+function clearTableData(tableId){
+  const table=document.getElementById(tableId);if(!table)return;
+  for(let i=1;i<table.rows.length;i++){
+    const inputs=table.rows[i].querySelectorAll('input,select');
+    inputs.forEach(input=>{if(!['perc','cum','single'].includes(input.getAttribute('data-col'))) input.value='';});
+  }
+  updateCumulative(tableId);
+  saveTableData(tableId);
+}
+
+// global jump
+document.getElementById('globalJump').addEventListener('keypress',(e)=>{
+  if(e.key==='Enter'){
+    const q=e.target.value.trim().toUpperCase();
+    if(!q) return;
+    for(const c of coins){if(c.startsWith(q)){const id=c+'Section';document.getElementById(id)?.scrollIntoView({behavior:'auto'});break;}}
+  }
+});
+</script>
+</body>
+</html>
