@@ -6,21 +6,100 @@
 <title>加密货币交易执行与心理跟踪表</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body{font-family:Arial,Helvetica,sans-serif;margin:20px;background:#f7f9fb;color:#222}
-h1{text-align:center}
-.header-text{text-align:center;margin-bottom:8px}
+:root{
+  --bg:#070b1a;
+  --bg-soft:#0c1430;
+  --panel:#101c3f;
+  --border:#1e3a66;
+  --text:#d9e6ff;
+  --muted:#9cb4e8;
+  --accent:#4df2ff;
+  --accent-2:#a56bff;
+  --danger:#ff6a6a;
+  --success:#35f28a;
+}
+body{
+  font-family:"Orbitron","Segoe UI",Arial,Helvetica,sans-serif;
+  margin:20px;
+  background:
+    radial-gradient(circle at 10% 20%,rgba(77,242,255,.15),transparent 40%),
+    radial-gradient(circle at 90% 10%,rgba(165,107,255,.18),transparent 45%),
+    linear-gradient(180deg,var(--bg) 0%,#030611 100%);
+  color:var(--text);
+}
+h1{
+  text-align:center;
+  letter-spacing:2px;
+  text-shadow:0 0 12px rgba(77,242,255,.6);
+}
+.header-text{
+  text-align:center;
+  margin-bottom:16px;
+  color:var(--muted);
+}
 .header-text p{margin:4px 0;user-select:none}
-.section{margin-bottom:36px}
-.top-btn,.clear-btn{margin-right:8px;padding:6px 10px;border-radius:6px;border:none;background:#277a3a;color:#fff;cursor:pointer}
-.clear-btn{background:#c0392b}
-.search-box{padding:6px;width:280px;margin-left:8px}
-table{width:100%;border-collapse:collapse;margin-top:12px}
-th,td{border:1px solid #d7dbe0;padding:6px;text-align:center}
-th{background:#eef2f6}
-input[type="number"],input[type="text"],select{width:100%;box-sizing:border-box;padding:4px}
-.editable{background:#fffbe6}
+.section{
+  margin-bottom:36px;
+  padding:16px;
+  background:linear-gradient(135deg,rgba(16,28,63,.9),rgba(12,20,48,.9));
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 0 24px rgba(77,242,255,.08);
+}
+.top-btn,.clear-btn{
+  margin-right:8px;
+  padding:6px 12px;
+  border-radius:999px;
+  border:1px solid transparent;
+  background:linear-gradient(135deg,rgba(77,242,255,.3),rgba(165,107,255,.3));
+  color:var(--text);
+  cursor:pointer;
+  box-shadow:0 0 8px rgba(77,242,255,.3);
+}
+.top-btn:hover,.clear-btn:hover{border-color:var(--accent)}
+.clear-btn{background:linear-gradient(135deg,rgba(255,106,106,.6),rgba(165,107,255,.3))}
+.search-box{
+  padding:8px 10px;
+  width:280px;
+  margin-left:8px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg-soft);
+  color:var(--text);
+  box-shadow:inset 0 0 10px rgba(77,242,255,.1);
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  background:rgba(8,14,32,.8);
+  border-radius:10px;
+  overflow:hidden;
+}
+th,td{
+  border:1px solid var(--border);
+  padding:6px;
+  text-align:center;
+}
+th{
+  background:linear-gradient(135deg,rgba(77,242,255,.2),rgba(165,107,255,.2));
+  color:var(--accent);
+  text-shadow:0 0 6px rgba(77,242,255,.6);
+}
+input[type="number"],input[type="text"],select{
+  width:100%;
+  box-sizing:border-box;
+  padding:6px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:#0a1330;
+  color:var(--text);
+}
+.editable{background:rgba(13,26,60,.9)}
+input[readonly]{color:var(--accent)}
 canvas{width:48%;height:120px;margin-top:8px;display:inline-block}
 .canvas-container{text-align:center}
+label{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -28,7 +107,7 @@ canvas{width:48%;height:120px;margin-top:8px;display:inline-block}
 <div class="header-text">
   <p>币安八折手续费邀请码：BNB886666</p>
   <p>欧易八折手续费邀请码：82567043</p>
-  <p>官方下载链接：btc99.cn 下载自动八折手续费减免</p>
+  <p>官方下载链接：ba01.cc 下载自动八折手续费减免</p>
 </div>
 
 <label for="globalJump">快速跳转到交易表：</label>
