@@ -26,6 +26,65 @@ body{
     radial-gradient(circle at 90% 10%,rgba(165,107,255,.18),transparent 45%),
     linear-gradient(180deg,var(--bg) 0%,#030611 100%);
   color:var(--text);
+  position:relative;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-2;
+  background:
+    radial-gradient(circle at 20% 22%,rgba(165,214,255,.18),transparent 42%),
+    radial-gradient(circle at 76% 28%,rgba(168,124,255,.14),transparent 45%),
+    radial-gradient(ellipse at center,rgba(20,38,88,.35),transparent 65%);
+}
+#spaceFx{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden;
+}
+#spaceFx::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    radial-gradient(circle,rgba(255,255,255,.62) 1px,transparent 1.6px),
+    radial-gradient(circle,rgba(123,199,255,.34) .8px,transparent 1.4px);
+  background-size:150px 150px,220px 220px;
+  background-position:0 0,80px 36px;
+  opacity:.62;
+}
+#spaceFx::after{
+  content:"";
+  position:absolute;
+  width:190vw;
+  height:42vh;
+  top:8vh;
+  left:-45vw;
+  transform:rotate(-12deg);
+  background:radial-gradient(ellipse at center,rgba(192,218,255,.24),rgba(116,148,230,.14) 28%,rgba(33,51,101,0) 65%);
+  opacity:.72;
+}
+.meteor{
+  position:absolute;
+  width:var(--meteor-size,150px);
+  height:2px;
+  border-radius:999px;
+  background:linear-gradient(90deg,rgba(255,255,255,.95),rgba(170,221,255,.76),rgba(95,170,255,.26),rgba(95,170,255,0));
+  transform:rotate(-28deg);
+  filter:drop-shadow(0 0 6px rgba(164,220,255,.6));
+  animation:meteor-fall linear forwards;
+  will-change:transform,opacity;
+}
+@keyframes meteor-fall{
+  0%{transform:translate3d(0,0,0) rotate(-28deg);opacity:0}
+  8%{opacity:1}
+  100%{transform:translate3d(-130vw,120vh,0) rotate(-28deg);opacity:0}
 }
 h1{
   text-align:center;
@@ -103,6 +162,7 @@ label{color:var(--accent)}
 </style>
 </head>
 <body>
+<div id="spaceFx" aria-hidden="true"></div>
 <h1 id="pageTop">加密货币交易执行与心理跟踪表</h1>
 <div class="header-text">
   <p>币安八折手续费邀请码：BNB886666</p>
@@ -310,6 +370,33 @@ document.getElementById('globalJump').addEventListener('keypress',(e)=>{
     for(const c of coins){if(c.startsWith(q)){const id=c+'Section';document.getElementById(id)?.scrollIntoView({behavior:'auto'});break;}}
   }
 });
+
+function spawnMeteor(){
+  const layer=document.getElementById('spaceFx');
+  if(!layer||document.hidden) return;
+  if(layer.childElementCount>14) return;
+
+  const meteor=document.createElement('span');
+  meteor.className='meteor';
+  meteor.style.left=`${(Math.random()*130)-10}vw`;
+  meteor.style.top=`${(-18-Math.random()*20)}vh`;
+  meteor.style.setProperty('--meteor-size',`${110+Math.random()*180}px`);
+  meteor.style.animationDuration=`${(1.2+Math.random()*1.4).toFixed(2)}s`;
+  meteor.style.opacity=(0.55+Math.random()*0.35).toFixed(2);
+  layer.appendChild(meteor);
+  meteor.addEventListener('animationend',()=>meteor.remove());
+}
+
+function startSpaceFx(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for(let i=0;i<4;i++) setTimeout(spawnMeteor,300*i);
+  setInterval(()=>{
+    if(Math.random()<0.82) spawnMeteor();
+    if(Math.random()<0.26) setTimeout(spawnMeteor,220);
+  },900);
+}
+
+startSpaceFx();
 </script>
 </body>
 </html>
